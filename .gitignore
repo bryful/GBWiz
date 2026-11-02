@@ -1,0 +1,33 @@
+/build/
+/.rom/
+/Rom/
+*.sav
+*.state
+third_party/gambatte/.git/
+/third_party/*-VC.zip
+/android/.gradle/
+/android/app/build/
+/android/app/.cxx/
+/android/build/
+/android/local.properties
+
+# Local ROMs, save data and signing credentials
+*.gb
+*.gbc
+*.nes
+*.jks
+*.keystore
+*.pem
+*.key
+.env
+.env.*
+
+# Private signing material and encrypted backups must stay outside this repository
+credentials.dpapi.xml
+*.7z
+*.p12
+*.pfx
+/GBWiz_signing/
+
+# Local editor settings
+/.vscode/
