@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(GBWiz VERSION 0.1.2 LANGUAGES C CXX)
+project(GBWiz VERSION 0.1.3 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gambatte/libgambatte)

@@ -26,7 +26,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
     private final Runnable clearNotification=()->{if(notification!=null)notification.setText("");};
     private DocumentStore store;
     private AudioTrack audio;
-    private boolean resumed,picking,swap,trigger,menuOpen,skipLogo=true;
+    private boolean resumed,picking,swap,swapXY,trigger,menuOpen,skipLogo=true;
     private int slot=1,keyButtons,hatButtons,speedHalf=2;
     private int experienceMultiplier=1,goldMultiplier=1;
     private boolean maxBonus,noMpCost,mixedParty,mapOpen,mapTrigger;
@@ -204,6 +204,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
     private void loadSettings() throws IOException {
         byte[] data=store.read("settings.ini"); settings.clear();
         if(data!=null) settings.load(new ByteArrayInputStream(data));
+        swapXY=Boolean.parseBoolean(settings.getProperty("swap_xy","false"));
         swap=Boolean.parseBoolean(settings.getProperty("swap_ab","false"));
         skipLogo=Boolean.parseBoolean(settings.getProperty("skip_logo","true"));view.skipLogo=skipLogo;
         try{int value=Integer.parseInt(settings.getProperty("speed_half","2"));speedHalf=(value==2||value==3||value==4||value==6||value==8)?value:2;}catch(NumberFormatException e){speedHalf=2;}
@@ -218,6 +219,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
     private void saveSettings() {
         try {
             if(store==null) return;
+            settings.setProperty("swap_xy",Boolean.toString(swapXY));
             settings.setProperty("swap_ab",Boolean.toString(swap)); settings.setProperty("slot",Integer.toString(slot));
             settings.setProperty("skip_logo",Boolean.toString(skipLogo));
             settings.setProperty("speed_half",Integer.toString(speedHalf));
@@ -241,7 +243,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
         view.browserItems=null;
         view.spellCharacters=null;
         view.characterMenu=false;selectedCharacter=-1;
-        menuOpen=!menuOpen;view.menu=menuOpen;view.slot=slot;view.swap=swap;view.skipLogo=skipLogo;view.speedHalf=speedHalf;
+        menuOpen=!menuOpen;view.menu=menuOpen;view.slot=slot;view.swap=swap;view.swapXY=swapXY;view.skipLogo=skipLogo;view.speedHalf=speedHalf;
         view.supportMenu=false;
         if(menuOpen)view.menuRow=0;silence();view.invalidate();
     }
@@ -283,6 +285,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
         }
         if(row==1){if(adjust!=0){slot=(slot-1+(adjust>0?1:4))%5+1;saveSettings();}}
         else if(row==4){swap=!swap;saveSettings();}
+        else if(row==10){swapXY=!swapXY;saveSettings();}
         else if(row==7){skipLogo=!skipLogo;if(core!=0)NativeCore.setSkipLogo(core,skipLogo);saveSettings();}
         else if(row==8&&adjust!=0){
             int[] speeds={2,3,4,6,8};int index=0;while(index<speeds.length&&speeds[index]!=speedHalf)index++;
@@ -295,7 +298,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
             else if(row==5)pickRom();else if(row==6)resetGame();
             else if(row==9){view.supportMenu=true;view.menuRow=0;}
         }
-        view.slot=slot;view.swap=swap;view.skipLogo=skipLogo;view.speedHalf=speedHalf;view.invalidate();
+        view.slot=slot;view.swap=swap;view.swapXY=swapXY;view.skipLogo=skipLogo;view.speedHalf=speedHalf;view.invalidate();
     }
     private void closeMap(){
         if(core!=0&&mapOpen){NativeCore.closeMap(core);mapOpen=false;view.mapMode=false;NativeCore.mapFrame(core,pixels);view.frame(pixels);silence();}
@@ -339,7 +342,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
         }
         if(!menuOpen)return;
         if(view.characterMenu&&(bit&2)!=0){pickSpellCharacter();view.invalidate();return;}
-        int rows=view.characterMenu?3:view.supportMenu?7:10;
+        int rows=view.characterMenu?3:view.supportMenu?7:11;
         if((bit&64)!=0)view.menuRow=(view.menuRow+rows-1)%rows;
         else if((bit&128)!=0)view.menuRow=(view.menuRow+1)%rows;
         else if((bit&16)!=0)activateMenu(1);else if((bit&32)!=0)activateMenu(-1);
@@ -438,7 +441,7 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
             if(key==KeyEvent.KEYCODE_BUTTON_L2||key==KeyEvent.KEYCODE_F5) {if(!mapOpen&&!menuOpen)state(1,false);return true;}
         }
         InputDevice device=event.getDevice();int vendor=device==null?0:device.getVendorId(),product=device==null?0:device.getProductId();
-        int value=ControllerMapping.bit(key,vendor,product);
+        int value=ControllerMapping.bit(key,vendor,product,swapXY);
         if(value!=0){
             if(device!=null&&(event.getSource()&InputDevice.SOURCE_GAMEPAD)!=0)
                 view.navigationHint=vendor==0x057e&&product==0x2009?"上下:選択  左右:変更  A:決定  B:戻る":"上下:選択  左右:変更  B:決定  A:戻る";

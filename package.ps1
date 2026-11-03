@@ -1,4 +1,4 @@
-﻿param([string]$Version='0.1.2',[switch]$SkipBuild,[switch]$IncludeAndroidRelease,[switch]$IncludeAndroidDebug,[string]$SignedAndroidApk)
+﻿param([string]$Version='0.1.3',[switch]$SkipBuild,[switch]$IncludeAndroidRelease,[switch]$IncludeAndroidDebug,[string]$SignedAndroidApk)
 $ErrorActionPreference='Stop'
 if($Version -notmatch '^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$'){throw 'Invalid release version.'}
 if(!$SkipBuild){& (Join-Path $PSScriptRoot 'build.ps1')}

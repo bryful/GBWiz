@@ -55,6 +55,17 @@ int main() try {
     require(buttons.actions[Menu]&&buttons.actions[Save1]&&buttons.actions[Load1],"Shortcut mapping failed");
     require(buttons.actions[FloorUp]&&buttons.actions[FloorDown],"LB/RB floor mapping failed");
     require(swapAB(buttons.game,true)==0x12,"AB swap changed directional input");
+    SDL_JoystickSetVirtualButton(joystick,SDL_CONTROLLER_BUTTON_X,1);
+    buttons={}; pads.poll(buttons);
+    require(buttons.game==0x19,"X must map to START");
+    buttons={}; pads.poll(buttons,true);
+    require(buttons.game==0x15,"Swapped X must map to SELECT");
+    SDL_JoystickSetVirtualButton(joystick,SDL_CONTROLLER_BUTTON_X,0);
+    SDL_JoystickSetVirtualButton(joystick,SDL_CONTROLLER_BUTTON_Y,1);
+    buttons={}; pads.poll(buttons);
+    require(buttons.game==0x15,"Y must map to SELECT");
+    buttons={}; pads.poll(buttons,true);
+    require(buttons.game==0x19,"Swapped Y must map to START");
     Edges edges; require(edges.update(buttons)[Save1],"Missing rising edge");
     require(!edges.update(buttons)[Save1],"Held trigger repeated state save");
     SDL_JoystickClose(joystick); require(SDL_JoystickDetachVirtual(index)==0,"Virtual unplug failed");

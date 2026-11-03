@@ -1,6 +1,6 @@
 ﻿param(
     [string]$InputApk = 'android\app\build\outputs\apk\release\app-release-unsigned.apk',
-    [string]$OutputApk = 'build\GBWiz-0.1.2.apk',
+    [string]$OutputApk = 'build\GBWiz-0.1.3.apk',
     [string]$Keystore = '..\GBWiz_signing\GBWiz-release.jks',
     [string]$KeyAlias = 'gbwiz',
     [string]$SdkPath = $env:ANDROID_HOME

@@ -43,7 +43,7 @@ GB / GBC判定はROMヘッダーで行います。拡張子やハッシュには
 | スロット1保存 / 復元 | F5 / F8 |
 | 機能メニュー / 閉じる | F1 または Esc |
 
-メニューでは上下で項目、左右でスロット（1〜5）とAB入れ替えを変更し、Enterで決定します。
+メニューでは上下で項目、左右でスロット（1〜5）とAB・XY入れ替えを変更し、Enterで決定します。
 「ROM選択」から起動中に別のGB / GBC ROMへ切り替えできます。
 選択キャンセル・ROM読込失敗・セーブ不整合時は元のゲームを保持します。
 切り替え前に通常セーブを保存し、切り替え先のROM名に対応するセーブを読み込みます。
@@ -54,6 +54,7 @@ AB入れ替えはキーボードとコントローラーのゲーム入力に共
 
 Xbox / Pro ControllerはSDL2の標準マッピングを使用します。十字キー、Start、Selectに対応し、
 NES配列として右のフェイスボタンがA、下のフェイスボタンがBです。
+XはSTART、YはSELECTです。「X / Y 入れ替え」で逆にできます（コントローラーのみ）。
 左スティック押し込みでメニュー、LTでスロット1保存、右スティック押し込みでスロット1読込。
 メニューは十字キーで操作し、右のフェイスボタンで決定、下のフェイスボタンで戻ります。
 接続・切断は起動後も検出します。実機の接続環境によって認識状況の確認が必要です。
@@ -63,7 +64,7 @@ SDL2で再生します。音声デバイスが使えない場合は画面通知�
 
 非アクティブ時は一時停止します。通常セーブは10秒ごと、ステート保存時、正常終了時に保存します。
 保存先は`%APPDATA%\GBWiz\ROM名.sav`と`ROM名.slot1.state`〜`ROM名.slot5.state`です。
-AB入れ替えと選択スロットは同フォルダの`settings.ini`に保存します。
+AB・XY入れ替えと選択スロットは同フォルダの`settings.ini`に保存します。
 非アクティブ化時にも通常セーブを保存し、メニュー中・非アクティブ中の音声を停止します。
 同名ROMは保存先も同じになるため、別ゲームには異なるファイル名を付けてください。
 検証時は`GBWiz.exe ROMパス --data-dir 保存フォルダ`で保存先を隔離できます。
@@ -71,7 +72,7 @@ AB入れ替えと選択スロットは同フォルダの`settings.ini`に保存�
 ## 配布版
 
 開発・検証は`build/Release`で行います。[リリース候補の説明](docs/release-guide.md)と[変更内容](docs/release-notes.md)を用意しています。
-`package.ps1 -Version 0.1.2 -SkipBuild -SignedAndroidApk build/GBWiz-0.1.2.apk`は、同階層の`GBWiz_app/0.1.2`へWindows版・署名済みAndroid版・説明書・ライセンス・チェックサムをまとめます。ソースは含めず、既存の版フォルダは上書きしません。
+`package.ps1 -Version 0.1.3 -SkipBuild -SignedAndroidApk build/GBWiz-0.1.3.apk`は、同階層の`GBWiz_app/0.1.3`へWindows版・署名済みAndroid版・説明書・ライセンス・チェックサムをまとめます。ソースは含めず、既存の版フォルダは上書きしません。
 正式なAndroid署名は`sign-release.ps1`でGBWiz専用鍵を指定して行います。従来と同じGBWiz専用鍵を使用します。
 
 ## 残りの実装
@@ -129,4 +130,4 @@ GBWiz独自のコード・文書・独自アセットは[MIT License](LICENSE)�
 
 GambatteはGPLv2であり、これをリンクしたWindows／Androidアプリの配布ではGPLv2の条件も満たす必要があります。GBWiz独自部分のMITライセンスは維持されます。内訳は[第三者ライセンス](THIRD_PARTY_NOTICES.md)、改変箇所は[Gambatte変更記録](docs/gambatte-changes.md)を参照してください。
 
-0.1.2の対応ソースは[タグv0.1.2](https://github.com/bryful/GBWiz/tree/v0.1.2)から取得できます。[ソースZIP](https://github.com/bryful/GBWiz/archive/refs/tags/v0.1.2.zip)はアプリ配布物と別に取得でき、ビルド手順は本READMEと[Android説明書](android/README.md)に記載しています。
+ソースコードはアプリ配布物と別途配布します。0.1.3のソースタグは未公開です。

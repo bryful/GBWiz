@@ -18,7 +18,7 @@ final class GameView extends View {
     private int active;
     private boolean blocked;
     int buttons,menuRow,slot=1,speedHalf=2;
-    boolean menu,swap,skipLogo=true,mapMode;
+    boolean menu,swap,swapXY,skipLogo=true,mapMode;
     boolean supportMenu,rewardSupported,goldRewardSupported;
     boolean characterMenu;
     int characterAlignment=-1;
@@ -66,11 +66,11 @@ final class GameView extends View {
         paint.setColor(0xff080c12);c.drawRect(menuBox,paint);
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);paint.setColor(0xffaab8c8);c.drawRect(menuBox,paint);paint.setStyle(Paint.Style.FILL);
         String[] items=browserItems!=null?browserItems:spellCharacters;
-        int visibleRows=items!=null?7:characterMenu?3:supportMenu?7:10;
+        int visibleRows=items!=null?7:characterMenu?3:supportMenu?7:11;
         float header=menuBox.height()*.13f;rowHeight=menuBox.height()*.735f/visibleRows;rowTop=menuBox.top+header;
         menuText(c,browserItems!=null?"ROM選択":spellCharacters!=null?"対象キャラクター選択":characterMenu?characterName:supportMenu?"サポート":"機能メニュー",new RectF(menuBox.left,menuBox.top,menuBox.right,rowTop),0xfff0f2f5,header*.46f);
         String speed=speedHalf%2==0?Integer.toString(speedHalf/2):"1.5";
-        String[] rows=items!=null?items:characterMenu?new String[]{"対象を選び直す","全呪文習得","属性   "+(characterAlignment>=0?"‹ "+new String[]{"善","中立","悪"}[characterAlignment]+" ›":"対象外")}:supportMenu?new String[]{"戻る","獲得経験値   "+(rewardSupported?"‹ ×"+experienceMultiplier+" ›":"対象外"),"獲得お金   "+(goldRewardSupported?"‹ ×"+goldMultiplier+" ›":"対象外"),"作成ボーナス最大   "+(bonusSupported?"‹ "+(maxBonus?"ON":"OFF")+" ›":"対象外"),"キャラクターを選択","MP消費なし   "+(mpSupported?"‹ "+(noMpCost?"ON":"OFF")+" ›":"対象外"),"善悪混合   "+(partySupported?"‹ "+(mixedParty?"ON":"OFF")+" ›":"対象外")}:new String[]{"再開","スロット   ‹  "+slot+" / 5  ›","ステート保存","ステート読込","A / B 入替   ‹  "+(swap?"ON":"OFF")+"  ›","ROM選択","リセット","ロゴスキップ   ‹  "+(skipLogo?"ON":"OFF")+"  ›","速度   ‹  "+speed+"倍  ›  音声1倍","サポート"};
+        String[] rows=items!=null?items:characterMenu?new String[]{"対象を選び直す","全呪文習得","属性   "+(characterAlignment>=0?"‹ "+new String[]{"善","中立","悪"}[characterAlignment]+" ›":"対象外")}:supportMenu?new String[]{"戻る","獲得経験値   "+(rewardSupported?"‹ ×"+experienceMultiplier+" ›":"対象外"),"獲得お金   "+(goldRewardSupported?"‹ ×"+goldMultiplier+" ›":"対象外"),"作成ボーナス最大   "+(bonusSupported?"‹ "+(maxBonus?"ON":"OFF")+" ›":"対象外"),"キャラクターを選択","MP消費なし   "+(mpSupported?"‹ "+(noMpCost?"ON":"OFF")+" ›":"対象外"),"善悪混合   "+(partySupported?"‹ "+(mixedParty?"ON":"OFF")+" ›":"対象外")}:new String[]{"再開","スロット   ‹  "+slot+" / 5  ›","ステート保存","ステート読込","A / B 入替   ‹  "+(swap?"ON":"OFF")+"  ›","ROM選択","リセット","ロゴスキップ   ‹  "+(skipLogo?"ON":"OFF")+"  ›","速度   ‹  "+speed+"倍  ›  音声1倍","サポート","X / Y 入替   ‹  "+(swapXY?"ON":"OFF")+"  ›"};
         int selected=browserItems!=null?browserRow:spellCharacters!=null?spellRow:menuRow,first=items!=null?(selected/7)*7:0;
         // Use the main menu's font size in every submenu. Row spacing may
         // grow for shorter lists, but font size never depends on row count,
@@ -91,8 +91,8 @@ final class GameView extends View {
         if((menu||browserItems!=null||spellCharacters!=null)&&type==MotionEvent.ACTION_DOWN&&menuBox!=null&&menuBox.contains(event.getX(),event.getY())) {
             int row=(int)((event.getY()-rowTop)/rowHeight);
             String[] items=browserItems!=null?browserItems:spellCharacters;
-            if(event.getY()>=rowTop&&row>=0&&row<(items!=null?7:characterMenu?3:supportMenu?7:10)) {
-                int adjust=items==null&&(characterMenu?row==2:supportMenu?((row>=1&&row<=3)||row==5||row==6):(row==1||row==4||row==7||row==8))?(event.getX()<menuBox.centerX()?-1:1):0;
+            if(event.getY()>=rowTop&&row>=0&&row<(items!=null?7:characterMenu?3:supportMenu?7:11)) {
+                int adjust=items==null&&(characterMenu?row==2:supportMenu?((row>=1&&row<=3)||row==5||row==6):(row==1||row==4||row==7||row==8||row==10))?(event.getX()<menuBox.centerX()?-1:1):0;
                 int selected=browserItems!=null?browserRow:spellRow,index=items==null?row:(selected/7)*7+row;
                 if(items==null||index<items.length)actions.menuItem(index,adjust);blocked=true;
             }

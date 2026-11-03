@@ -38,7 +38,7 @@ Buttons keyboard() {
 }
 std::wstring wide(const std::string& text){int length=MultiByteToWideChar(CP_UTF8,0,text.data(),static_cast<int>(text.size()),nullptr,0);std::wstring result(length,0);if(length)MultiByteToWideChar(CP_UTF8,0,text.data(),static_cast<int>(text.size()),result.data(),length);return result;}
 void render(HWND window, const std::array<gambatte::video_pixel_t,160*144>& pixels,
-            const BITMAPINFO& bitmap, bool menu, int row, int slot, bool swap,
+            const BITMAPINFO& bitmap, bool menu, int row, int slot, bool swap, bool swapXY,
             const std::wstring& status, const fs::path& saves, const fs::path& rom,bool skipLogo,int speedHalf,const RewardSupport& rewards,const CreationSupport& creation,const MpSupport& mp,const PartySupport& party,bool selectingSpell,const std::vector<SpellCharacter>& spellCharacters,bool characterMenu,const SpellCharacter& selectedCharacter,int alignment) {
     RECT r; GetClientRect(window,&r);
     const LONG contentBottom=std::max(1L,r.bottom-44);
@@ -59,7 +59,7 @@ void render(HWND window, const std::array<gambatte::video_pixel_t,160*144>& pixe
             L"速度 : "+(speedHalf==3?std::wstring(L"1.5"):std::to_wstring(speedHalf/2))+L"倍 （左右で変更・音声1倍）",
             L"獲得経験値 : "+(rewards.experienceSupported()?L"×"+std::to_wstring(rewards.experience()):std::wstring(L"対象外（外伝1〜3・GBC版I〜III）")),
             L"獲得お金 : "+(rewards.goldSupported()?L"×"+std::to_wstring(rewards.gold()):std::wstring(L"対象外（外伝1〜3・GBC版I〜III）")),
-            L"作成ボーナス最大 : "+(creation.supported()?std::wstring(creation.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1〜3・GBC版）")),L"キャラクターサポート",L"MP消費なし : "+(mp.supported()?std::wstring(mp.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1）")),L"善悪混合 : "+(party.supported()?std::wstring(party.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1）")),L"迷宮マップ・移動（M / RT）"};
+            L"作成ボーナス最大 : "+(creation.supported()?std::wstring(creation.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1〜3・GBC版）")),L"キャラクターサポート",L"MP消費なし : "+(mp.supported()?std::wstring(mp.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1）")),L"善悪混合 : "+(party.supported()?std::wstring(party.enabled()?L"ON":L"OFF"):std::wstring(L"対象外（外伝1）")),L"迷宮マップ・移動（M / RT）",std::wstring(L"X / Y 入れ替え : ")+(swapXY?L"ON":L"OFF")};
         if(selectingSpell){lines={L"戻る"};for(const auto& character:spellCharacters)lines.push_back(std::to_wstring(character.slot+1)+L": "+wide(character.name));}
         else if(characterMenu)lines={L"対象を選び直す",L"全呪文習得",L"属性 : "+(alignment>=0?std::wstring(L"‹ ")+std::array<const wchar_t*,3>{L"善",L"中立",L"悪"}[alignment]+L" ›":std::wstring(L"対象外"))};
         SetTextColor(buffer,RGB(235,235,245));
@@ -185,6 +185,7 @@ int wmain(int argc, wchar_t** argv) try {
     bitmap.bmiHeader.biPlanes=1; bitmap.bmiHeader.biBitCount=32; bitmap.bmiHeader.biCompression=BI_RGB;
     SdlRuntime runtime; Controllers controllers; Audio audio;
     bool swap=GetPrivateProfileIntW(L"controls",L"swap_ab",0,settings.c_str())!=0;
+    bool swapXY=GetPrivateProfileIntW(L"controls",L"swap_xy",0,settings.c_str())!=0;
     int slot=std::clamp(static_cast<int>(GetPrivateProfileIntW(L"states",L"slot",1,settings.c_str())),1,5);
     bool running=true, menu=false, active=true, releaseGame=false;
     bool selectingSpell=false;int spellRow=0;std::vector<SpellCharacter> spellCharacters;
@@ -196,7 +197,8 @@ int wmain(int argc, wchar_t** argv) try {
     auto flush=[&] { if(gb->savedata_size()) write(save,gb->savedata_ptr(),gb->savedata_size()); };
     auto notice=[&](std::wstring text) { status=std::move(text); statusUntil=std::chrono::steady_clock::now()+std::chrono::seconds(4); };
     auto persist=[&] {
-        if(!WritePrivateProfileStringW(L"controls",L"swap_ab",swap?L"1":L"0",settings.c_str()) ||
+        if(!WritePrivateProfileStringW(L"controls",L"swap_xy",swapXY?L"1":L"0",settings.c_str()) ||
+           !WritePrivateProfileStringW(L"controls",L"swap_ab",swap?L"1":L"0",settings.c_str()) ||
            !WritePrivateProfileStringW(L"states",L"slot",std::to_wstring(slot).c_str(),settings.c_str()))
             notice(L"設定の保存に失敗しました");
         if(!WritePrivateProfileStringW(L"support",L"skip_logo",skipLogo?L"1":L"0",settings.c_str()))notice(L"設定の保存に失敗しました");
@@ -259,7 +261,7 @@ int wmain(int argc, wchar_t** argv) try {
     while(running) {
         MSG msg; while(PeekMessageW(&msg,nullptr,0,0,PM_REMOVE)) { if(msg.message==WM_QUIT) running=false; TranslateMessage(&msg); DispatchMessageW(&msg); }
         if(!running) break;
-        Buttons buttons=keyboard(); controllers.poll(buttons);
+        Buttons buttons=keyboard(); controllers.poll(buttons,swapXY);
         bool focused=GetForegroundWindow()==window && !IsIconic(window);
         auto pressed=edges.update(buttons);
         if(!focused) {
@@ -302,10 +304,11 @@ int wmain(int argc, wchar_t** argv) try {
                 }catch(const std::exception& e){std::cerr<<e.what()<<"\n";notice(applied?L"変更は適用済みですが通常セーブを保存できません":L"通常セーブの保存に失敗したため適用を中止しました");}
             }
           }else{
-            if(pressed[Up]) row=(row+15)%16;
-            if(pressed[Down]) row=(row+1)%16;
+            if(pressed[Up]) row=(row+16)%17;
+            if(pressed[Down]) row=(row+1)%17;
             if(row==1&&(pressed[Left]||pressed[Right])) { slot=(slot-1+(pressed[Right]?1:4))%5+1; persist(); }
             if(row==4&&(pressed[Left]||pressed[Right]||pressed[Confirm])) { swap=!swap; persist(); }
+            if(row==16&&(pressed[Left]||pressed[Right]||pressed[Confirm])) { swapXY=!swapXY; persist(); }
             if(row==7&&(pressed[Left]||pressed[Right]||pressed[Confirm])) {skipLogo=!skipLogo;persist();}
             if(row==8&&(pressed[Left]||pressed[Right])){
                 const int speeds[]={2,3,4,6,8};auto current=std::find(std::begin(speeds),std::end(speeds),speedHalf)-std::begin(speeds);
@@ -369,7 +372,7 @@ int wmain(int argc, wchar_t** argv) try {
         if(!menu&&!dungeonMap.open) {unsigned held=input.value;unsigned samples=turbo.run(held,input.value,pixels,sound);audio.push(sound.data(),samples);}
         if(std::chrono::steady_clock::now()>statusUntil) status.clear();
         auto display=pixels;if(dungeonMap.open)drawDungeonMap(dungeonMap,*gb,display);
-        render(window,display,bitmap,menu,selectingSpell?spellRow:characterMenu?characterRow:row,slot,swap,status,saves,rom,skipLogo,speedHalf,turbo.rewards(),turbo.creation(),turbo.mp(),turbo.party(),selectingSpell,spellCharacters,characterMenu,selectedCharacter,characterMenu?turbo.spells().alignment(*gb,selectedCharacter.slot):-1);
+        render(window,display,bitmap,menu,selectingSpell?spellRow:characterMenu?characterRow:row,slot,swap,swapXY,status,saves,rom,skipLogo,speedHalf,turbo.rewards(),turbo.creation(),turbo.mp(),turbo.party(),selectingSpell,spellCharacters,characterMenu,selectedCharacter,characterMenu?turbo.spells().alignment(*gb,selectedCharacter.slot):-1);
         deadline+=std::chrono::nanoseconds(16742706); std::this_thread::sleep_until(deadline);
         auto now=std::chrono::steady_clock::now(); if(now-lastFlush>std::chrono::seconds(10)) {
             try { flush(); } catch(const std::exception& e) { std::cerr<<e.what()<<"\n"; notice(L"通常セーブの保存に失敗しました"); } lastFlush=now;

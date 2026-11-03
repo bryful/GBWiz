@@ -10,12 +10,16 @@
 
 // SDL uses physical Xbox positions by default, including for Nintendo devices.
 // NES A is the right face button, NES B is the bottom face button.
-inline unsigned controllerButtons(SDL_GameController* pad) {
+inline unsigned controllerButtons(SDL_GameController* pad, bool swapXY=false) {
     unsigned value=0;
     const SDL_GameControllerButton buttons[]={SDL_CONTROLLER_BUTTON_B,SDL_CONTROLLER_BUTTON_A,
         SDL_CONTROLLER_BUTTON_BACK,SDL_CONTROLLER_BUTTON_START,SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
         SDL_CONTROLLER_BUTTON_DPAD_LEFT,SDL_CONTROLLER_BUTTON_DPAD_UP,SDL_CONTROLLER_BUTTON_DPAD_DOWN};
     for(int i=0;i<8;++i) if(SDL_GameControllerGetButton(pad,buttons[i])) value|=1u<<i;
+    // SDL normalizes Switch Pro face positions; X/Y use the printed labels.
+    if(SDL_GameControllerGetType(pad)==SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO) swapXY=!swapXY;
+    if(SDL_GameControllerGetButton(pad,SDL_CONTROLLER_BUTTON_X)) value|=swapXY?4u:8u;
+    if(SDL_GameControllerGetButton(pad,SDL_CONTROLLER_BUTTON_Y)) value|=swapXY?8u:4u;
     return value;
 }
 inline unsigned swapAB(unsigned value, bool swap) {
@@ -39,7 +43,7 @@ class Controllers {
     std::vector<SDL_GameController*> pads;
 public:
     ~Controllers() { for(auto pad:pads) SDL_GameControllerClose(pad); }
-    void poll(Buttons& result) {
+    void poll(Buttons& result, bool swapXY=false) {
         SDL_Event event;
         while(SDL_PollEvent(&event)) {} // native window messages are handled by Win32
         for(auto it=pads.begin();it!=pads.end();) {
@@ -53,7 +57,7 @@ public:
         }
         SDL_GameControllerUpdate();
         for(auto pad:pads) {
-            unsigned game=controllerButtons(pad); result.game|=game;
+            unsigned game=controllerButtons(pad,swapXY); result.game|=game;
             result.actions[Menu]|=SDL_GameControllerGetButton(pad,SDL_CONTROLLER_BUTTON_LEFTSTICK)!=0;
             result.actions[Save1]|=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_TRIGGERLEFT)>16000;
             result.actions[FloorUp]|=SDL_GameControllerGetButton(pad,SDL_CONTROLLER_BUTTON_LEFTSHOULDER)!=0;
